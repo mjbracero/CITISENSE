@@ -1,10 +1,10 @@
-import { useEffect } from "react";
 import { View, Image, StyleSheet } from "react-native";
+import { useEffect } from "react";
 import { useRouter } from "expo-router";
 
 const logo = require("../../assets/images/logowname.png");
 
-export default function IndexScreen() {
+export default function SplashScreen() {
   const router = useRouter();
 
   useEffect(() => {
@@ -13,7 +13,7 @@ export default function IndexScreen() {
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [router]);
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -29,7 +29,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
   logo: {
     width: 244,
     height: 244,

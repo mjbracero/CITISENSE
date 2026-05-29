@@ -15,7 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../lib/supabase";
 
 import {
   useFonts,
@@ -56,6 +56,8 @@ const barangays = [
   "Sudlonon",
   "Taytayan",
 ];
+
+const EMAIL_REDIRECT_URL = "citisensef://login";
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -115,8 +117,16 @@ export default function SignupScreen() {
       return false;
     }
 
-    if (!email.includes("@")) {
+    if (!email.includes("@") || !email.includes(".")) {
       Alert.alert("Invalid email", "Please enter a valid email address.");
+      return false;
+    }
+
+    if (contactNumber.length < 10) {
+      Alert.alert(
+        "Invalid contact number",
+        "Please enter a valid contact number."
+      );
       return false;
     }
 
@@ -139,39 +149,48 @@ export default function SignupScreen() {
   const handleSignup = async () => {
     if (!validateForm()) return;
 
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-    const { data, error } = await supabase.auth.signUp({
-      email: formData.email.trim().toLowerCase(),
-      password: formData.password,
-      options: {
-        data: {
-          full_name: formData.fullName.trim(),
-          contact_number: formData.contactNumber.trim(),
-          barangay: formData.barangay.trim(),
-          role: "citizen",
+      const email = formData.email.trim().toLowerCase();
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password: formData.password,
+        options: {
+          emailRedirectTo: EMAIL_REDIRECT_URL,
+          data: {
+            full_name: formData.fullName.trim(),
+            contact_number: formData.contactNumber.trim(),
+            barangay: formData.barangay.trim(),
+            role: "citizen",
+          },
         },
-      },
-    });
+      });
 
-    setIsLoading(false);
+      if (error) {
+        Alert.alert("Signup failed", error.message);
+        return;
+      }
 
-    if (error) {
-      Alert.alert("Signup failed", error.message);
-      return;
-    }
-
-    if (!data.session) {
       Alert.alert(
-        "Check your email",
-        "Your account has been created. Please verify your email before logging in."
+        "Verify your email",
+        data?.session
+          ? "Your account has been created successfully."
+          : "Your account has been created. Please check your email and confirm your account before logging in.",
+        [
+          {
+            text: "OK",
+            onPress: () => router.replace("/login"),
+          },
+        ]
       );
-      router.replace("/login");
-      return;
+    } catch (error) {
+      console.log("Signup error:", error);
+      Alert.alert("Signup error", "Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-
-    Alert.alert("Success", "Your account has been created successfully.");
-    router.replace("/login");
   };
 
   return (
@@ -195,7 +214,6 @@ export default function SignupScreen() {
             <Text style={styles.label}>Full Name</Text>
             <View style={styles.inputWrapper}>
               <Ionicons name="person" size={16} color="#0A760A" />
-
               <TextInput
                 value={formData.fullName}
                 onChangeText={(text) => updateField("fullName", text)}
@@ -208,7 +226,6 @@ export default function SignupScreen() {
             <Text style={styles.label}>Contact Number</Text>
             <View style={styles.inputWrapper}>
               <Ionicons name="call" size={16} color="#0A760A" />
-
               <TextInput
                 value={formData.contactNumber}
                 onChangeText={(text) => updateField("contactNumber", text)}
@@ -226,7 +243,6 @@ export default function SignupScreen() {
               onPress={() => setShowBarangayDropdown(true)}
             >
               <Ionicons name="location" size={16} color="#0A760A" />
-
               <Text
                 style={[
                   styles.dropdownText,
@@ -235,14 +251,12 @@ export default function SignupScreen() {
               >
                 {formData.barangay || "Select your barangay"}
               </Text>
-
               <Ionicons name="chevron-down" size={16} color="#717A6D" />
             </TouchableOpacity>
 
             <Text style={styles.label}>Email Address</Text>
             <View style={styles.inputWrapper}>
               <Ionicons name="mail" size={16} color="#0A760A" />
-
               <TextInput
                 value={formData.email}
                 onChangeText={(text) => updateField("email", text)}
@@ -258,7 +272,6 @@ export default function SignupScreen() {
             <Text style={styles.label}>Password</Text>
             <View style={styles.inputWrapper}>
               <Ionicons name="lock-closed" size={16} color="#0A760A" />
-
               <TextInput
                 value={formData.password}
                 onChangeText={(text) => updateField("password", text)}
@@ -267,7 +280,6 @@ export default function SignupScreen() {
                 style={styles.input}
                 secureTextEntry={!showPassword}
               />
-
               <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
                 activeOpacity={0.7}
@@ -283,7 +295,6 @@ export default function SignupScreen() {
             <Text style={styles.label}>Confirm Password</Text>
             <View style={styles.inputWrapper}>
               <Ionicons name="lock-closed" size={16} color="#0A760A" />
-
               <TextInput
                 value={formData.confirmPassword}
                 onChangeText={(text) => updateField("confirmPassword", text)}
@@ -292,9 +303,10 @@ export default function SignupScreen() {
                 style={styles.input}
                 secureTextEntry={!showConfirmPassword}
               />
-
               <TouchableOpacity
-                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                onPress={() =>
+                  setShowConfirmPassword(!showConfirmPassword)
+                }
                 activeOpacity={0.7}
               >
                 <Ionicons
@@ -320,7 +332,6 @@ export default function SignupScreen() {
 
             <View style={styles.loginContainer}>
               <Text style={styles.loginText}>Already have an account? </Text>
-
               <TouchableOpacity
                 onPress={() => router.replace("/login")}
                 activeOpacity={0.7}

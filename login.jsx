@@ -9,10 +9,13 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { supabase } from "../lib/supabase";
 
 import {
   useFonts,
@@ -29,6 +32,8 @@ const people = require("../../assets/images/people.png");
 const person = require("../../assets/images/person.png");
 const userShield = require("../../assets/images/user-shield.png");
 
+const HOME_ROUTE = "/home";
+
 const roles = [
   { id: "citizen", label: "Citizen", icon: people },
   { id: "moderator", label: "Moderator", icon: person },
@@ -42,6 +47,7 @@ export default function LoginScreen() {
   const [emailOrPhone, setEmailOrPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [fontsLoaded] = useFonts({
     Poppins_400Regular,
@@ -51,6 +57,58 @@ export default function LoginScreen() {
   });
 
   if (!fontsLoaded) return null;
+
+  const validateLogin = () => {
+    const email = emailOrPhone.trim();
+    const pass = password.trim();
+
+    if (!email || !pass) {
+      Alert.alert("Missing fields", "Please enter your email and password.");
+      return false;
+    }
+
+    if (!email.includes("@") || !email.includes(".")) {
+      Alert.alert("Invalid email", "Please enter a valid email address.");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleLogin = async () => {
+    if (!validateLogin()) return;
+
+    try {
+      setIsLoading(true);
+
+      const email = emailOrPhone.trim().toLowerCase();
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password: password.trim(),
+      });
+
+      if (error) {
+        Alert.alert("Login failed", error.message);
+        return;
+      }
+
+      if (!data?.session) {
+        Alert.alert(
+          "Login failed",
+          "No active session was created. Please verify your email first."
+        );
+        return;
+      }
+
+      router.replace(HOME_ROUTE);
+    } catch (error) {
+      console.log("Login error:", error);
+      Alert.alert("Login error", "Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -102,7 +160,7 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.form}>
-            <Text style={styles.label}>Email or Phone Number</Text>
+            <Text style={styles.label}>Email Address</Text>
 
             <View style={styles.inputWrapper}>
               <Image
@@ -114,11 +172,12 @@ export default function LoginScreen() {
               <TextInput
                 value={emailOrPhone}
                 onChangeText={setEmailOrPhone}
-                placeholder="Enter your email or phone number"
+                placeholder="Enter your email address"
                 placeholderTextColor="#717A6D"
                 style={styles.input}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                autoCorrect={false}
               />
             </View>
 
@@ -138,6 +197,8 @@ export default function LoginScreen() {
                 placeholderTextColor="#717A6D"
                 style={[styles.input, styles.passwordInput]}
                 secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
               />
 
               <TouchableOpacity
@@ -157,8 +218,17 @@ export default function LoginScreen() {
               <Text style={styles.forgotText}>Forgot Password?</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.loginButton} activeOpacity={0.8}>
-              <Text style={styles.loginText}>Log in</Text>
+            <TouchableOpacity
+              style={[styles.loginButton, isLoading && styles.disabledButton]}
+              activeOpacity={0.8}
+              onPress={handleLogin}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.loginText}>Log in</Text>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -237,7 +307,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#FFFFFF",
-    borderWidth: 0,
   },
 
   activeRoleCard: {
@@ -334,6 +403,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 23,
+  },
+
+  disabledButton: {
+    opacity: 0.7,
   },
 
   loginText: {
