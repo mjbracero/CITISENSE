@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "../lib/supabase";
 
 import {
@@ -26,13 +27,9 @@ import {
 } from "@expo-google-fonts/poppins";
 
 const logo = require("../../assets/images/logowname.png");
-const emailIcon = require("../../assets/images/icon-2.png");
-const lockIcon = require("../../assets/images/lock.png");
 const people = require("../../assets/images/people.png");
 const person = require("../../assets/images/person.png");
 const userShield = require("../../assets/images/user-shield.png");
-
-const HOME_ROUTE = "/home";
 
 const roles = [
   { id: "citizen", label: "Citizen", icon: people },
@@ -42,12 +39,11 @@ const roles = [
 
 export default function LoginScreen() {
   const router = useRouter();
-
   const [selectedRole, setSelectedRole] = useState("citizen");
-  const [emailOrPhone, setEmailOrPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [fontsLoaded] = useFonts({
     Poppins_400Regular,
@@ -55,102 +51,81 @@ export default function LoginScreen() {
     Poppins_600SemiBold,
     Poppins_700Bold,
   });
-
   if (!fontsLoaded) return null;
 
-  const validateLogin = () => {
-    const email = emailOrPhone.trim();
-    const pass = password.trim();
-
-    if (!email || !pass) {
-      Alert.alert("Missing fields", "Please enter your email and password.");
-      return false;
-    }
-
-    if (!email.includes("@") || !email.includes(".")) {
-      Alert.alert("Invalid email", "Please enter a valid email address.");
-      return false;
-    }
-
-    return true;
-  };
-
   const handleLogin = async () => {
-    if (!validateLogin()) return;
-
+    if (!email || !password) {
+      Alert.alert("Missing fields", "Please enter email and password");
+      return;
+    }
+    setLoading(true);
     try {
-      setIsLoading(true);
-
-      const email = emailOrPhone.trim().toLowerCase();
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password: password.trim(),
-      });
-
-      if (error) {
-        Alert.alert("Login failed", error.message);
+      const { data: authData, error: authError } =
+        await supabase.auth.signInWithPassword({
+          email: email.trim().toLowerCase(),
+          password,
+        });
+      if (authError || !authData?.user) {
+        Alert.alert("Login failed", authError?.message || "Invalid credentials");
         return;
       }
 
-      if (!data?.session) {
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, role, email")
+        .eq("email", email.trim().toLowerCase())
+        .single();
+
+      if (profileError || !profile) {
+        Alert.alert("Login failed", "User profile not found");
+        return;
+      }
+
+      if (profile.role !== selectedRole) {
         Alert.alert(
-          "Login failed",
-          "No active session was created. Please verify your email first."
+          "Role mismatch",
+          `This account is registered as ${profile.role}. Cannot login as ${selectedRole}`
         );
         return;
       }
 
-      router.replace(HOME_ROUTE);
-    } catch (error) {
-      console.log("Login error:", error);
-      Alert.alert("Login error", "Something went wrong. Please try again.");
+      await AsyncStorage.setItem("user_role", profile.role);
+      await AsyncStorage.setItem("user_email", profile.email);
+      router.replace(selectedRole === "citizen" ? "/home" : `/${selectedRole}`);
+    } catch (err) {
+      console.log(err);
+      Alert.alert("Error", "Something went wrong.");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView
-          contentContainerStyle={styles.container}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
           <Image source={logo} style={styles.logo} resizeMode="contain" />
-
-          <Text style={styles.title}>Welcome back!</Text>
-
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { fontFamily: "Poppins_700Bold" }]}>Welcome back!</Text>
+          <Text style={[styles.subtitle, { fontFamily: "Poppins_400Regular" }]}>
             Sign in to continue improving our community together.
           </Text>
 
           <View style={styles.roleContainer}>
             {roles.map((role) => {
               const isSelected = selectedRole === role.id;
-
               return (
                 <TouchableOpacity
                   key={role.id}
                   style={[styles.roleCard, isSelected && styles.activeRoleCard]}
                   onPress={() => setSelectedRole(role.id)}
-                  activeOpacity={0.8}
                 >
-                  <Image
-                    source={role.icon}
-                    style={styles.roleIcon}
-                    resizeMode="contain"
-                  />
-
+                  <Image source={role.icon} style={styles.roleIcon} />
                   <Text
-                    style={[
-                      styles.roleText,
-                      isSelected && styles.activeRoleText,
-                    ]}
+                    style={{
+                      fontFamily: isSelected ? "Poppins_700Bold" : "Poppins_600SemiBold",
+                      color: isSelected ? "#0A760A" : "#000000",
+                      fontSize: 12,
+                    }}
                   >
                     {role.label}
                   </Text>
@@ -160,86 +135,56 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.form}>
-            <Text style={styles.label}>Email Address</Text>
-
+            <Text style={[styles.label, { fontFamily: "Poppins_600SemiBold" }]}>Email</Text>
             <View style={styles.inputWrapper}>
-              <Image
-                source={emailIcon}
-                style={styles.inputIcon}
-                resizeMode="contain"
-              />
-
+              <Ionicons name="mail" size={18} color="#0A760A" />
               <TextInput
-                value={emailOrPhone}
-                onChangeText={setEmailOrPhone}
-                placeholder="Enter your email address"
+                style={[styles.input, { fontFamily: "Poppins_400Regular" }]}
+                placeholder="Enter your email"
                 placeholderTextColor="#717A6D"
-                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                autoCorrect={false}
               />
             </View>
 
-            <Text style={styles.label}>Password</Text>
-
+            <Text style={[styles.label, { fontFamily: "Poppins_600SemiBold" }]}>Password</Text>
             <View style={styles.inputWrapper}>
-              <Image
-                source={lockIcon}
-                style={styles.inputIcon}
-                resizeMode="contain"
-              />
-
+              <Ionicons name="lock-closed" size={18} color="#0A760A" />
               <TextInput
-                value={password}
-                onChangeText={setPassword}
+                style={[styles.input, { fontFamily: "Poppins_400Regular", paddingRight: 38 }]}
                 placeholder="Enter your password"
                 placeholderTextColor="#717A6D"
-                style={[styles.input, styles.passwordInput]}
+                value={password}
+                onChangeText={setPassword}
                 secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoCorrect={false}
               />
-
               <TouchableOpacity
+                style={{ position: "absolute", right: 10 }}
                 onPress={() => setShowPassword(!showPassword)}
-                style={styles.eyeButton}
-                activeOpacity={0.7}
               >
-                <Ionicons
-                  name={showPassword ? "eye-off" : "eye"}
-                  size={18}
-                  color="#717A6D"
-                />
+                <Ionicons name={showPassword ? "eye-off" : "eye"} size={18} color="#717A6D" />
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.forgotButton} activeOpacity={0.7}>
-              <Text style={styles.forgotText}>Forgot Password?</Text>
-            </TouchableOpacity>
-
             <TouchableOpacity
-              style={[styles.loginButton, isLoading && styles.disabledButton]}
-              activeOpacity={0.8}
+              style={[styles.loginButton, loading && { opacity: 0.7 }]}
               onPress={handleLogin}
-              disabled={isLoading}
+              disabled={loading}
             >
-              {isLoading ? (
-                <ActivityIndicator color="#FFFFFF" />
+              {loading ? (
+                <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.loginText}>Log in</Text>
+                <Text style={[styles.loginButtonText, { fontFamily: "Poppins_600SemiBold" }]}>Log In</Text>
               )}
             </TouchableOpacity>
           </View>
 
           <View style={styles.registerContainer}>
-            <Text style={styles.registerText}>Don't have an account? </Text>
-
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => router.push("/signup")}
-            >
-              <Text style={styles.registerLink}>Register</Text>
+            <Text style={{ fontFamily: "Poppins_400Regular" }}>Don't have an account? </Text>
+            <TouchableOpacity onPress={() => router.push("/signup")}>
+              <Text style={{ fontFamily: "Poppins_700Bold", color: "#0A760A" }}>Register</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -249,187 +194,20 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-
-  keyboardView: {
-    flex: 1,
-  },
-
-  container: {
-    flexGrow: 1,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    paddingHorizontal: 31,
-    paddingTop: 28,
-    paddingBottom: 18,
-  },
-
-  logo: {
-    width: 180,
-    height: 180,
-    marginTop: 4,
-  },
-
-  title: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 31,
-    color: "#0A760A",
-    marginTop: 10,
-  },
-
-  subtitle: {
-    fontFamily: "Poppins_400Regular",
-    width: 270,
-    textAlign: "center",
-    fontSize: 12,
-    color: "#41493E",
-    lineHeight: 17,
-    marginTop: 5,
-  },
-
-  roleContainer: {
-    width: "100%",
-    height: 79,
-    borderWidth: 1,
-    borderColor: "#D9D9D9",
-    borderRadius: 8,
-    flexDirection: "row",
-    marginTop: 24,
-    overflow: "hidden",
-    backgroundColor: "#FFFFFF",
-  },
-
-  roleCard: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#FFFFFF",
-  },
-
-  activeRoleCard: {
-    backgroundColor: "#E7F5DB",
-    borderWidth: 1,
-    borderColor: "#0A760A",
-    borderRadius: 8,
-  },
-
-  roleIcon: {
-    width: 30,
-    height: 30,
-    marginBottom: 5,
-  },
-
-  roleText: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 12,
-    color: "#000000",
-  },
-
-  activeRoleText: {
-    fontFamily: "Poppins_700Bold",
-    color: "#0A760A",
-  },
-
-  form: {
-    width: "100%",
-    marginTop: 16,
-  },
-
-  label: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 13,
-    color: "#41493E",
-    marginBottom: 6,
-    marginTop: 8,
-  },
-
-  inputWrapper: {
-    width: "100%",
-    height: 48,
-    borderWidth: 1,
-    borderColor: "#B4B4B4",
-    borderRadius: 7,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 17,
-    backgroundColor: "#FFFFFF",
-  },
-
-  inputIcon: {
-    width: 16,
-    height: 16,
-    marginRight: 10,
-  },
-
-  input: {
-    fontFamily: "Poppins_400Regular",
-    flex: 1,
-    height: "100%",
-    fontSize: 13,
-    color: "#41493E",
-  },
-
-  passwordInput: {
-    paddingRight: 38,
-  },
-
-  eyeButton: {
-    position: "absolute",
-    right: 16,
-    height: 48,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  forgotButton: {
-    alignSelf: "flex-end",
-    marginTop: 9,
-  },
-
-  forgotText: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 13,
-    color: "#0A760A",
-  },
-
-  loginButton: {
-    width: "100%",
-    height: 49,
-    backgroundColor: "#0A760A",
-    borderRadius: 50,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 23,
-  },
-
-  disabledButton: {
-    opacity: 0.7,
-  },
-
-  loginText: {
-    fontFamily: "Poppins_600SemiBold",
-    fontSize: 18,
-    color: "#FFFFFF",
-  },
-
-  registerContainer: {
-    flexDirection: "row",
-    marginTop: 15,
-    alignItems: "center",
-  },
-
-  registerText: {
-    fontFamily: "Poppins_400Regular",
-    fontSize: 13,
-    color: "#41493E",
-  },
-
-  registerLink: {
-    fontFamily: "Poppins_700Bold",
-    fontSize: 13,
-    color: "#0A760A",
-  },
+  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
+  container: { flexGrow: 1, alignItems: "center", paddingHorizontal: 31, paddingTop: 28 },
+  logo: { width: 180, height: 180, marginTop: 4 },
+  title: { fontSize: 31, color: "#0A760A", marginTop: 10 },
+  subtitle: { width: 270, textAlign: "center", fontSize: 12, color: "#41493E", lineHeight: 17, marginTop: 5 },
+  roleContainer: { width: "100%", height: 79, borderWidth: 1, borderColor: "#D9D9D9", borderRadius: 8, flexDirection: "row", marginTop: 24, overflow: "hidden", backgroundColor: "#FFFFFF" },
+  roleCard: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#FFFFFF" },
+  activeRoleCard: { backgroundColor: "#E7F5DB", borderWidth: 1, borderColor: "#0A760A", borderRadius: 8 },
+  roleIcon: { width: 30, height: 30, marginBottom: 5 },
+  form: { width: "100%", marginTop: 16 },
+  label: { fontSize: 13, color: "#41493E", marginBottom: 6, marginTop: 8 },
+  inputWrapper: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: "#B4B4B4", borderRadius: 7, paddingHorizontal: 12, height: 48, marginBottom: 12 },
+  input: { flex: 1, height: "100%", fontSize: 13, color: "#41493E", marginLeft: 8 },
+  loginButton: { backgroundColor: "#0A760A", borderRadius: 50, height: 50, justifyContent: "center", alignItems: "center", marginTop: 10 },
+  loginButtonText: { color: "#fff", fontSize: 16 },
+  registerContainer: { flexDirection: "row", marginTop: 16, alignItems: "center" },
 });

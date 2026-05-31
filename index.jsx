@@ -8,12 +8,13 @@ export default function SplashScreen() {
   const router = useRouter();
 
   useEffect(() => {
+    // Navigate to login after 3 seconds
     const timer = setTimeout(() => {
-      router.replace("/login");
+      router.replace("/login"); // ensure login.jsx exists in /app
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [router]);
 
   return (
     <View style={styles.container}>
@@ -30,7 +31,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   logo: {
-    width: 244,
-    height: 244,
+    width: 180,
+    height: 180,
   },
 });
