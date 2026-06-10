@@ -1,11 +1,14 @@
 import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 
-export default function RootLayout() {
+export default function Layout() {
   return (
-    <>
-      <Stack screenOptions={{ headerShown: false }} />
-      <StatusBar style="auto" />
-    </>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: "none",
+        gestureEnabled: false,
+        fullScreenGestureEnabled: false,
+      }}
+    />
   );
 }
