@@ -157,9 +157,3 @@ Administrators can:
 - Tricia Hyne Dungog
 - Mary Jennyrose Bracero
 - Zach Jimenez
-
----
-
-## 📄 License
-
-This project was developed as an academic capstone and research project. All rights are reserved by the project proponents and their institution.
