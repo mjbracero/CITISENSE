@@ -1,149 +1,165 @@
-🏙️ CITISENSE: A Geo-Spatial AI Platform for Automated Classification, Cluster Detection, and Prioritization of Urban Concerns
+# 🏙️ CITISENSE: A GEO-SPATIAL AI PLATFORM FOR AUTOMATED CLASSIFICATION, CLUSTER DETECTION, AND PRIORITIZATION OF URBAN CONCERNS
 
-👨‍💻 Proponents
-- Joseph James Pinote
-- Tricia Hyne Dungog
-- Mary Jennyrose Bracero
-- Zach Jimenez
+CitiSense is an AI-powered complaint management platform designed to help Local Government Units (LGUs) efficiently process, classify, prioritize, and monitor citizen complaints. Through Artificial Intelligence (AI), Natural Language Processing (NLP), Computer Vision, geospatial analysis, and real-time monitoring, the system improves the speed, accuracy, and transparency of complaint resolution.
 
-🎯 Project Purpose
+---
 
-CitiSense is an AI-powered complaint management platform designed to help Local Government Units (LGUs) efficiently process, classify, prioritize, and monitor citizen complaints.
+## 🎯 Project Purpose
 
-Many LGUs face challenges such as delayed responses, misclassified reports, lack of systematic prioritization, and limited transparency in complaint handling. CitiSense addresses these issues by leveraging Artificial Intelligence (AI), Natural Language Processing (NLP), Computer Vision, geospatial analysis, and real-time monitoring to improve the speed, accuracy, and organization of complaint resolution.
+This project aims to address common challenges faced by Local Government Units in handling citizen complaints, including delayed responses, misclassified reports, lack of prioritization, and limited monitoring capabilities.
 
-✨ Key Features
-- 🤖 Automated complaint classification
-- 📸 AI-assisted verification of complaint data and images
-- 🚨 Smart prioritization based on urgency and severity
-- 📍 Geospatial cluster detection of similar complaints
-- 📊 Real-time dashboards and analytics
-- 🔔 Automated notification system
-- ✅ Complaint validation and resolution tracking
+### Key Objectives
 
+1. **Automated Complaint Classification**
+   - Categorize complaints into appropriate departments using AI and NLP.
 
-⚙️ Setup Instructions
+2. **Smart Prioritization**
+   - Assign priority levels based on urgency and severity.
 
-📋 Prerequisites
+3. **Geo-Spatial Cluster Detection**
+   - Detect complaint hotspots using location data and report frequency.
+
+4. **Real-Time Complaint Tracking**
+   - Allow citizens and government personnel to monitor complaint progress.
+
+5. **Improved Transparency**
+   - Provide dashboards, analytics, and notifications throughout the complaint lifecycle.
+
+---
+
+## ⚙️ Setup Instructions
+
+### Prerequisites
 
 Before running the project, ensure the following are installed:
 
-- 🟢 Node.js (LTS Version)
-- 📦 npm or Yarn
-- 🌿 Git
-- 📱 Expo CLI
-- 🗄️ Supabase Project Configuration
+- **Node.js** (Latest LTS Version)
+- **npm** or **Yarn**
+- **Git**
+- **Expo CLI**
+- **Supabase Project Configuration**
 
-🚀 Installation
+### Installation
 
-1️⃣ Clone the Repository
+#### 1. Clone the Repository
 
 ```bash
 git clone <repository-url>
 cd CitiSense
 ```
 
-2️⃣ Install Dependencies
-
-Using npm:
+#### 2. Install Dependencies
 
 ```bash
 npm install
 ```
 
-Or using Yarn:
+or
 
 ```bash
 yarn install
 ```
 
-3️⃣ Configure Environment Variables
+#### 3. Configure Environment Variables
 
-Create a `.env` file in the project's root directory and add the required environment variables:
+Create a `.env` file in the project root:
 
 ```env
 EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-Add any additional API keys or service credentials required by the project.
-
-4️⃣ Start the Development Server
+#### 4. Start the Development Server
 
 ```bash
 npx expo start
 ```
 
-5️⃣ Run the Application
+#### 5. Run the Application
 
-For Android:
+**Android**
 
 ```bash
 npx expo run:android
 ```
 
-For iOS:
+**iOS**
 
 ```bash
 npx expo run:ios
 ```
 
+---
 
-📖 Usage Details
+## 📖 Usage Details
 
-👤 Citizen
+### 👤 Citizen
 
 Citizens can:
 
-- 📝 Register and log in
-- 📢 Submit complaints with descriptions and image evidence
-- 🎙️ Use voice input when filing complaints
-- 📍 Automatically attach location and timestamp information
-- 🔍 Track complaint status updates
-- 📸 Validate resolved complaints by submitting photo evidence
-- 💬 Provide feedback regarding complaint resolution
+- Register and log in
+- Submit complaints with descriptions and image evidence
+- Use voice input during complaint submission
+- Track complaint progress and status updates
+- Validate resolved complaints
+- Provide feedback and supporting photo evidence
 
-🏢 Department Moderator
+### 🏢 Department Moderator
 
 Department Moderators can:
 
-- 📋 View assigned complaints
-- 🔄 Update complaint statuses
-- 🛠️ Manage and monitor department concerns
-- ↔️ Reassign incorrectly classified complaints
-- ✅ Handle complaint resolution workflows
+- View assigned complaints
+- Update complaint statuses
+- Reassign complaints to appropriate departments
+- Manage complaint resolution workflows
+- Monitor department-specific concerns
 
-👨‍💼 Admin
+### 👨‍💼 Admin
 
 Administrators can:
 
-- 🌐 Monitor all complaints across departments
-- 📊 Access analytical dashboards and reports
-- 📸 Review citizen-submitted validation evidence
-- 💬 Review citizen feedback
-- ✅ Confirm and finalize complaint resolutions
+- Monitor all complaints across departments
+- Review citizen feedback and validation submissions
+- Verify uploaded evidence
+- Confirm complaint completion
+- Access analytical dashboards and reports
 
- 🔄 Complaint Workflow
+---
 
-1. 📝 Citizen submits a complaint.
-2. 🤖 AI verifies and classifies the complaint.
-3. 🏢 The complaint is assigned to the appropriate department.
-4. 🚨 AI determines the complaint's priority level.
-5. 🛠️ Department Moderators process and resolve the complaint.
-6. 📸 Citizens validate the resolution and provide feedback.
-7. 👨‍💼 Administrators review the validation and finalize the complaint status.
+## 🔄 Complaint Workflow
 
+1. **Citizen submits a complaint**
+2. **AI verifies and classifies the complaint**
+3. **Complaint is assigned to the appropriate department**
+4. **AI determines complaint priority**
+5. **Department Moderator processes the complaint**
+6. **Citizen validates the resolution**
+7. **Admin reviews validation and confirms completion**
 
-🛠️ Technology Stack
+---
 
-- ⚛️ React Native
-- 📱 Expo
-- 🗄️ Supabase
-- 🐘 PostgreSQL
-- 🔄 n8n
-- 🤖 Artificial Intelligence (AI)
-- 🧠 Natural Language Processing (NLP)
-- 👁️ Computer Vision
-- 📍 Geospatial Analysis
-- 🔔 Push Notifications
+## 🛠️ Tech Stack
 
+- **Frontend (Mobile):** React Native, Expo
+- **Backend:** Supabase (PostgreSQL)
+- **Authentication:** Supabase Auth
+- **Storage:** Supabase Storage
+- **Automation:** n8n AI Agent
+- **Artificial Intelligence:** NLP & Computer Vision
+- **Geospatial Services:** Geotagging & Cluster Detection
+- **Notifications:** Push Notifications
+
+---
+
+## 👨‍💻 Proponents
+
+- Joseph James Pinote
+- Tricia Hyne Dungog
+- Mary Jennyrose Bracero
+- Zach Jimenez
+
+---
+
+## 📄 License
+
+This project was developed as an academic capstone and research project. All rights are reserved by the project proponents and their institution.
